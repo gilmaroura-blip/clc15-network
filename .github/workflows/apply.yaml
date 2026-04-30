@@ -1,4 +1,5 @@
 name: Deploy Infrastructure
+
 on:
   push:
     branches:
@@ -11,18 +12,39 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
-jobs:     
+jobs:
+  Checkov:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Test with Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          # soft_fail: true # Descomente esta linha se quiser que o pipeline continue mesmo com erros de segurança
+
   Apply:
-    name: 'Apply Changes'
+    name: 'Terraform Apply'
+    needs: Checkov # Importante: Só roda se o Checkov for aprovado
     runs-on: ubuntu-latest
     environment: production
 
     defaults:
       run:
         shell: bash
-        
+
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Terraform
@@ -32,6 +54,9 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        
+
+      - name: Terraform Plan
+        run: terraform plan
+
       - name: Terraform Apply
         run: terraform apply --auto-approve
