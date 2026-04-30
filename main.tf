@@ -1,4 +1,3 @@
-
 resource "aws_vpc" "terraform_vpc" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
@@ -7,6 +6,23 @@ resource "aws_vpc" "terraform_vpc" {
     Name = "clc15-tf-vpc"
     CC = "1234567"
     Owner = "Devops"
+  }
+}
+
+# Correcao primeira issue
+resource "aws_flow_log" "example" {
+  log_destination      = "arn:aws:s3:::clc15-oura-terraform"
+  log_destination_type = "s3"
+  traffic_type         = "ALL"
+  vpc_id               = aws_vpc.terraform_vpc.id
+}
+
+# Correcao segunda issue
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.terraform_vpc.id
+  
+  tags = {
+    Name = "my-iac-sg"
   }
 }
 
